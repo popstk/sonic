@@ -89,6 +89,23 @@ func (p *PhotoHandler) CreatePhoto(ctx *gin.Context) (interface{}, error) {
 	return p.PhotoService.ConvertToDTO(ctx, photo), nil
 }
 
+func (p *PhotoHandler) CreatePhotoBatch(ctx *gin.Context) (interface{}, error) {
+	photosParam := make([]*param.Photo, 0)
+	err := ctx.ShouldBindJSON(&photosParam)
+	if err != nil {
+		e := validator.ValidationErrors{}
+		if errors.As(err, &e) {
+			return nil, xerr.WithStatus(e, xerr.StatusBadRequest).WithMsg(trans.Translate(e))
+		}
+		return nil, xerr.WithStatus(err, xerr.StatusBadRequest).WithMsg("parameter error")
+	}
+	photos, err := p.PhotoService.CreateBatch(ctx, photosParam)
+	if err != nil {
+		return nil, err
+	}
+	return p.PhotoService.ConvertToDTOs(ctx, photos), nil
+}
+
 func (p *PhotoHandler) UpdatePhoto(ctx *gin.Context) (interface{}, error) {
 	id, err := util.ParamInt32(ctx, "id")
 	if err != nil {
@@ -96,7 +113,6 @@ func (p *PhotoHandler) UpdatePhoto(ctx *gin.Context) (interface{}, error) {
 	}
 	photoParam := &param.Photo{}
 	err = ctx.ShouldBindJSON(photoParam)
-
 	if err != nil {
 		e := validator.ValidationErrors{}
 		if errors.As(err, &e) {
@@ -117,6 +133,21 @@ func (p *PhotoHandler) DeletePhoto(ctx *gin.Context) (interface{}, error) {
 		return nil, err
 	}
 	return nil, p.PhotoService.Delete(ctx, id)
+}
+
+func (p *PhotoHandler) DeletePhotoBatch(ctx *gin.Context) (interface{}, error) {
+	photosParam := make([]int32, 0)
+	err := ctx.ShouldBindJSON(&photosParam)
+	if err != nil {
+		return nil, xerr.WithStatus(err, xerr.StatusBadRequest).WithMsg("parameter error")
+	}
+	for _, id := range photosParam {
+		err := p.PhotoService.Delete(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return nil, nil
 }
 
 func (p *PhotoHandler) ListPhotoTeams(ctx *gin.Context) (interface{}, error) {

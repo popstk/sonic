@@ -36,7 +36,7 @@ func (s *Server) RegisterRouters() {
 		})
 		{
 			staticRouter := router.Group("/")
-			staticRouter.StaticFS("admin", gin.Dir(s.Config.Sonic.AdminResourcesDir, false))
+			staticRouter.StaticFS(s.Config.Sonic.AdminURLPath, gin.Dir(s.Config.Sonic.AdminResourcesDir, false))
 			staticRouter.StaticFS("/css", gin.Dir(filepath.Join(s.Config.Sonic.AdminResourcesDir, "css"), false))
 			staticRouter.StaticFS("/js", gin.Dir(filepath.Join(s.Config.Sonic.AdminResourcesDir, "js"), false))
 			staticRouter.StaticFS("/images", gin.Dir(filepath.Join(s.Config.Sonic.AdminResourcesDir, "images"), false))
@@ -226,8 +226,9 @@ func (s *Server) RegisterRouters() {
 					photoRouter.GET("/latest", s.wrapHandler(s.PhotoHandler.ListPhoto))
 					photoRouter.GET("", s.wrapHandler(s.PhotoHandler.PagePhotos))
 					photoRouter.GET("/:id", s.wrapHandler(s.PhotoHandler.GetPhotoByID))
-					photoRouter.DELETE("/:id", s.wrapHandler(s.PhotoHandler.DeletePhoto))
+					photoRouter.DELETE("/batch", s.wrapHandler(s.PhotoHandler.DeletePhotoBatch))
 					photoRouter.POST("", s.wrapHandler(s.PhotoHandler.CreatePhoto))
+					photoRouter.POST("/batch", s.wrapHandler(s.PhotoHandler.CreatePhotoBatch))
 					photoRouter.PUT("/:id", s.wrapHandler(s.PhotoHandler.UpdatePhoto))
 					photoRouter.GET("/teams", s.wrapHandler(s.PhotoHandler.ListPhotoTeams))
 				}
@@ -345,6 +346,8 @@ func (s *Server) RegisterRouters() {
 			contentAPIRouter.GET("/links/team_view", s.wrapHandler(s.ContentAPILinkHandler.LinkTeamVO))
 
 			contentAPIRouter.GET("/options/comment", s.wrapHandler(s.ContentAPIOptionHandler.Comment))
+
+			contentAPIRouter.POST("/comments/:commentID/likes", s.wrapHandler(s.ContentAPICommentHandler.Like))
 		}
 	}
 }
